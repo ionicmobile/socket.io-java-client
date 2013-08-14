@@ -3,6 +3,9 @@ package io.socket;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLContext;
@@ -28,11 +31,24 @@ class WebsocketTransport extends WebSocketClient implements IOTransport {
     public WebsocketTransport(URI uri, IOConnection connection) {
         super(uri);
         this.connection = connection;
-        SSLContext context = IOConnection.getSslContext();
+        SSLContext context = null;
+        try {
+            context = SSLContext.getInstance("TLS", "HarmonyJSSE");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        }
+        try {
+            context.init(null, null, null);
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
         if("wss".equals(uri.getScheme()) && context != null) {
-	        this.setWebSocketFactory(new DefaultSSLWebSocketClientFactory(context));
+                this.setWebSocketFactory(new DefaultSSLWebSocketClientFactory(context));
         }
     }
+
 
     /* (non-Javadoc)
      * @see io.socket.IOTransport#disconnect()
